@@ -1,0 +1,75 @@
+html,
+html body {
+  width: 100%;
+  height: 100%;
+}
+
+html body .Header {
+  top: 0;
+  width: 100%;
+  display: flex;
+  position: fixed;
+  background: white;
+  align-items: center;
+  justify-content: space-between;
+  border-bottom: solid 0.5px gray;
+}
+
+html body .Header .homeLogo {
+  margin-left: 3rem;
+}
+
+html body .Header .headerNav {
+  float: right;
+  height: 3rem;
+  list-style: none;
+  display: flex;
+  vertical-align: middle;
+}
+
+html body .Header .headerNav h1 {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+html body .Header .headerNav h1 li {
+  padding: 0 2rem 0 2rem;
+}
+
+html body .body {
+  display: flex;
+  align-content: center;
+  height: 100%;
+  margin: 0 10%;
+  border-left: solid 0.5px gray;
+  border-right: solid 0.5px gray;
+}
+
+html body .body .main {
+  width: 100%;
+  margin-top: 8rem;
+}
+
+html body .body .main .inputText {
+  position: fixed;
+  border: solid 2px gray;
+  width: 80%;
+  height: 5rem;
+  resize: none;
+  bottom: 2rem;
+}
+
+html body .body .main .sendButton {
+  border: solid 1px black;
+  background: powderblue;
+  width: 80%;
+  position: fixed;
+  bottom: 0;
+  height: 2rem;
+}
+
+html body p {
+  /* margin: 0rem; */
+  margin-bottom: 1rem;
+}

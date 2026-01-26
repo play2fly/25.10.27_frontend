@@ -1,0 +1,80 @@
+name: Build and Push Frontend to ECR
+
+on:
+  push:
+    branches:
+      - prod
+      - dev
+    paths:
+      - '**'
+      - '!.github/**'
+  workflow_dispatch: # 수동 실행 가능
+    inputs:
+      aws_access_key_id:
+        description: 'AWS Access Key ID'
+        required: false
+        type: string
+      aws_secret_access_key:
+        description: 'AWS Secret Access Key'
+        required: false
+        type: string
+        secret: true
+
+env:
+  AWS_REGION: ap-northeast-2
+  AWS_ACCOUNT_ID: 352302000381
+
+jobs:
+  build-and-push:
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-access-key-id: ${{ inputs.aws_access_key_id || secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ inputs.aws_secret_access_key || secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: ${{ env.AWS_REGION }}
+
+      - name: Login to Amazon ECR
+        id: login-ecr
+        uses: aws-actions/amazon-ecr-login@v2
+
+      - name: Set ECR repository and tags based on branch
+        id: set-config
+        run: |
+          if [[ "${{ github.ref }}" == "refs/heads/prod" ]]; then
+            echo "ecr_repo=qio-01-prod-frontend" >> $GITHUB_OUTPUT
+            echo "tag=prod-${{ github.sha }}" >> $GITHUB_OUTPUT
+            echo "latest_tag=prod-latest" >> $GITHUB_OUTPUT
+          elif [[ "${{ github.ref }}" == "refs/heads/dev" ]]; then
+            echo "ecr_repo=qio-01-dev-frontend" >> $GITHUB_OUTPUT
+            echo "tag=dev-${{ github.sha }}" >> $GITHUB_OUTPUT
+            echo "latest_tag=dev-latest" >> $GITHUB_OUTPUT
+          else
+            echo "ecr_repo=qio-01-prod-frontend" >> $GITHUB_OUTPUT
+            echo "tag=${{ github.sha }}" >> $GITHUB_OUTPUT
+            echo "latest_tag=latest" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Build and push Docker image
+        env:
+          ECR_REGISTRY: ${{ steps.login-ecr.outputs.registry }}
+          ECR_REPOSITORY: ${{ steps.set-config.outputs.ecr_repo }}
+          IMAGE_TAG: ${{ steps.set-config.outputs.tag }}
+          LATEST_TAG: ${{ steps.set-config.outputs.latest_tag }}
+        run: |
+          docker build --platform linux/amd64 \
+            -t $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG \
+            -t $ECR_REGISTRY/$ECR_REPOSITORY:$LATEST_TAG \
+            .
+          
+          docker push $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG
+          docker push $ECR_REGISTRY/$ECR_REPOSITORY:$LATEST_TAG
+          
+          echo "✅ Frontend image pushed: $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG"
+          echo "✅ Frontend image pushed: $ECR_REGISTRY/$ECR_REPOSITORY:$LATEST_TAG"
+

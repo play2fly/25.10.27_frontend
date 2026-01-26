@@ -1,0 +1,11 @@
+server:
+  port: 3041
+
+debug: true
+proxy: false
+external_interceptor: true
+internal_interceptor: true
+
+global:
+  project:
+    name: 'noname_universal1'
