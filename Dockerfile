@@ -42,17 +42,19 @@ FROM --platform=linux/amd64 node:20-alpine
 
 WORKDIR /app
 
-# Production 의존성만 설치
+# Production 의존성 설치 + TypeScript (next.config.ts 로드에 필요)
 COPY package*.json ./
 COPY pnpm-lock.yaml ./
 RUN npm install -g pnpm && \
-    pnpm install --prod --frozen-lockfile
+    pnpm install --prod --frozen-lockfile && \
+    pnpm add -D typescript
 
 # 빌드된 파일 복사
 COPY --from=builder /app/.next ./.next
 COPY --from=builder /app/public ./public
 COPY --from=builder /app/next.config.ts ./next.config.ts
 COPY --from=builder /app/tsconfig.json ./tsconfig.json
+COPY --from=builder /app/package.json ./package.json
 
 # 포트 노출 (앱이 사용하는 포트 3040)
 EXPOSE 3040
