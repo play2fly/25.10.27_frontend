@@ -50,14 +50,17 @@ jobs:
             echo "ecr_repo=qio-01-prod-frontend" >> $GITHUB_OUTPUT
             echo "tag=prod-${{ github.sha }}" >> $GITHUB_OUTPUT
             echo "latest_tag=prod-latest" >> $GITHUB_OUTPUT
+            echo "build_env=prod" >> $GITHUB_OUTPUT
           elif [[ "${{ github.ref }}" == "refs/heads/dev" ]]; then
             echo "ecr_repo=qio-01-dev-frontend" >> $GITHUB_OUTPUT
             echo "tag=dev-${{ github.sha }}" >> $GITHUB_OUTPUT
             echo "latest_tag=dev-latest" >> $GITHUB_OUTPUT
+            echo "build_env=dev" >> $GITHUB_OUTPUT
           else
             echo "ecr_repo=qio-01-prod-frontend" >> $GITHUB_OUTPUT
             echo "tag=${{ github.sha }}" >> $GITHUB_OUTPUT
             echo "latest_tag=latest" >> $GITHUB_OUTPUT
+            echo "build_env=prod" >> $GITHUB_OUTPUT
           fi
 
       - name: Build and push Docker image
@@ -66,14 +69,23 @@ jobs:
           ECR_REPOSITORY: ${{ steps.set-config.outputs.ecr_repo }}
           IMAGE_TAG: ${{ steps.set-config.outputs.tag }}
           LATEST_TAG: ${{ steps.set-config.outputs.latest_tag }}
+          BUILD_ENV: ${{ steps.set-config.outputs.build_env }}
         run: |
           docker build --platform linux/amd64 \
+            --build-arg BUILD_ENV=$BUILD_ENV \
             -t $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG \
             -t $ECR_REGISTRY/$ECR_REPOSITORY:$LATEST_TAG \
             .
           
           docker push $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG
           docker push $ECR_REGISTRY/$ECR_REPOSITORY:$LATEST_TAG
+          
+          # prod 브랜치인 경우 latest 태그도 함께 푸시 (하위 호환성)
+          if [[ "$BUILD_ENV" == "prod" ]]; then
+            docker tag $ECR_REGISTRY/$ECR_REPOSITORY:$LATEST_TAG $ECR_REGISTRY/$ECR_REPOSITORY:latest
+            docker push $ECR_REGISTRY/$ECR_REPOSITORY:latest
+            echo "✅ Frontend image pushed: $ECR_REGISTRY/$ECR_REPOSITORY:latest"
+          fi
           
           echo "✅ Frontend image pushed: $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG"
           echo "✅ Frontend image pushed: $ECR_REGISTRY/$ECR_REPOSITORY:$LATEST_TAG"

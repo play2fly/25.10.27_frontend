@@ -15,11 +15,27 @@ RUN npm install -g pnpm && \
 # 소스 코드 복사
 COPY . .
 
+# 빌드 인자로 환경 받기 (기본값: prod)
+ARG BUILD_ENV=prod
+
 # Next.js 빌드 (프로덕션 모드)
 ENV NODE_ENV=production
 ENV NEXT_TELEMETRY_DISABLED=1
 
-RUN pnpm run build:dev || pnpm run build
+# 환경에 따라 환경 변수 파일 준비 및 빌드 명령 실행
+RUN if [ "$BUILD_ENV" = "dev" ]; then \
+      # dev 환경: dev 환경 변수 파일이 .yaml 확장자가 아니면 복사
+      if [ ! -f "0x00_env/0x02_dev.yaml" ]; then \
+        cp 0x00_env/0x02_dev 0x00_env/0x02_dev.yaml 2>/dev/null || true; \
+      fi && \
+      pnpm run build:dev || pnpm run build; \
+    else \
+      # prod 환경: prod 환경 변수 파일이 .yaml 확장자가 아니면 복사
+      if [ ! -f "0x00_env/0x06_prod.yaml" ]; then \
+        cp 0x00_env/0x06_prod 0x00_env/0x06_prod.yaml 2>/dev/null || true; \
+      fi && \
+      pnpm run build:prod || pnpm run build; \
+    fi
 
 # Production 이미지
 FROM --platform=linux/amd64 node:20-alpine
@@ -38,16 +54,16 @@ COPY --from=builder /app/public ./public
 COPY --from=builder /app/next.config.ts ./next.config.ts
 COPY --from=builder /app/tsconfig.json ./tsconfig.json
 
-# 포트 노출 (Next.js 기본 포트 3000)
-EXPOSE 3000
+# 포트 노출 (앱이 사용하는 포트 3040)
+EXPOSE 3040
 
 ENV NODE_ENV=production
 ENV NEXT_TELEMETRY_DISABLED=1
-ENV PORT=3000
+ENV PORT=3040
 
-# 헬스체크
+# 헬스체크 (3040 포트 기준)
 HEALTHCHECK --interval=30s --timeout=3s --start-period=40s --retries=3 \
-  CMD node -e "require('http').get('http://localhost:3000/health', (r) => {process.exit(r.statusCode === 200 ? 0 : 1)})"
+  CMD node -e "require('http').get('http://localhost:3040/health', (r) => {process.exit(r.statusCode === 200 ? 0 : 1)})"
 
 # 앱 실행
 CMD ["pnpm", "start"]
