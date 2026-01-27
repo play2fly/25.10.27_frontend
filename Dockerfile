@@ -59,9 +59,9 @@ COPY --from=builder /app/package.json ./package.json
 # 포트 노출 (앱이 사용하는 포트 3040)
 EXPOSE 3040
 
-ENV NODE_ENV=production
-ENV NEXT_TELEMETRY_DISABLED=1
-ENV PORT=3040
+# ENV NODE_ENV=production
+# ENV NEXT_TELEMETRY_DISABLED=1
+# ENV PORT=3040
 
 # 헬스체크 (3040 포트 기준)
 HEALTHCHECK --interval=30s --timeout=3s --start-period=40s --retries=3 \
@@ -70,3 +70,9 @@ HEALTHCHECK --interval=30s --timeout=3s --start-period=40s --retries=3 \
 # 앱 실행
 CMD ["pnpm", "start"]
 
+
+
+
+
+# docker build -t test-frontend .
+# docker run -p 3040:3040 test-frontend
