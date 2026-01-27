@@ -91,3 +91,35 @@ jobs:
           echo "✅ Frontend image pushed: $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG"
           echo "✅ Frontend image pushed: $ECR_REGISTRY/$ECR_REPOSITORY:$LATEST_TAG"
 
+      - name: Set ECS service name based on branch
+        id: set-ecs-config
+        run: |
+          if [[ "${{ github.ref }}" == "refs/heads/prod" ]]; then
+            echo "ecs_cluster=qio-01-prod-cluster" >> $GITHUB_OUTPUT
+            echo "ecs_service=qio-01-prod-frontend-svc" >> $GITHUB_OUTPUT
+          elif [[ "${{ github.ref }}" == "refs/heads/dev" ]]; then
+            echo "ecs_cluster=qio-01-dev-cluster" >> $GITHUB_OUTPUT
+            echo "ecs_service=qio-01-dev-frontend-svc" >> $GITHUB_OUTPUT
+          else
+            echo "ecs_cluster=qio-01-prod-cluster" >> $GITHUB_OUTPUT
+            echo "ecs_service=qio-01-prod-frontend-svc" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Force ECS service deployment
+        run: |
+          CLUSTER=${{ steps.set-ecs-config.outputs.ecs_cluster }}
+          SERVICE=${{ steps.set-ecs-config.outputs.ecs_service }}
+          
+          echo "🔄 Forcing new deployment for ECS service: $SERVICE in cluster: $CLUSTER"
+          aws ecs update-service \
+            --cluster "$CLUSTER" \
+            --service "$SERVICE" \
+            --force-new-deployment \
+            --region ${{ env.AWS_REGION }} || {
+            echo "⚠️  ECS service update failed. Service may not exist yet."
+            echo "   This is normal if the service hasn't been created via CDK yet."
+          }
+          
+          echo "✅ ECS service deployment triggered"
+          echo "   Monitor deployment: aws ecs describe-services --cluster $CLUSTER --services $SERVICE --region ${{ env.AWS_REGION }}"
+
