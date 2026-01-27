@@ -46,19 +46,20 @@ jobs:
       - name: Set ECR repository and tags based on branch
         id: set-config
         run: |
+          TIMESTAMP_TAG=$(date +%Y%m%d-%H%M%S)z
           if [[ "${{ github.ref }}" == "refs/heads/prod" ]]; then
             echo "ecr_repo=qio-01-prod-frontend" >> $GITHUB_OUTPUT
-            echo "tag=prod-${{ github.sha }}" >> $GITHUB_OUTPUT
+            echo "tag=$TIMESTAMP_TAG" >> $GITHUB_OUTPUT
             echo "latest_tag=prod-latest" >> $GITHUB_OUTPUT
             echo "build_env=prod" >> $GITHUB_OUTPUT
           elif [[ "${{ github.ref }}" == "refs/heads/dev" ]]; then
             echo "ecr_repo=qio-01-dev-frontend" >> $GITHUB_OUTPUT
-            echo "tag=dev-${{ github.sha }}" >> $GITHUB_OUTPUT
+            echo "tag=$TIMESTAMP_TAG" >> $GITHUB_OUTPUT
             echo "latest_tag=dev-latest" >> $GITHUB_OUTPUT
             echo "build_env=dev" >> $GITHUB_OUTPUT
           else
             echo "ecr_repo=qio-01-prod-frontend" >> $GITHUB_OUTPUT
-            echo "tag=${{ github.sha }}" >> $GITHUB_OUTPUT
+            echo "tag=$TIMESTAMP_TAG" >> $GITHUB_OUTPUT
             echo "latest_tag=latest" >> $GITHUB_OUTPUT
             echo "build_env=prod" >> $GITHUB_OUTPUT
           fi
