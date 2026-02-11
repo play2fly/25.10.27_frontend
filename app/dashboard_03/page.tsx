@@ -48,6 +48,7 @@ export default function HomePage() {
   const [botPriceSource, setBotPriceSource] = useState<"REDIS_LAST_TRADE" | "REDIS_TICK" | "MONGO_CANDLE_CLOSE" | "MANUAL">("REDIS_LAST_TRADE");
   const [botMongoCollection, setBotMongoCollection] = useState("LBANK:SWCUSDT-1m");
   const [botManualPrice, setBotManualPrice] = useState("");
+  const [botManualVolume, setBotManualVolume] = useState("");
   const [botSelectedKeyIdxes, setBotSelectedKeyIdxes] = useState<number[]>([]);
   
 
@@ -483,9 +484,20 @@ export default function HomePage() {
           </div>
           <div className={cn(botPriceSource !== "MANUAL" && "opacity-50")}>
             <div className="text-xs text-gray-500">manual price</div>
-            <input className="mt-1 w-full rounded-lg border px-3 py-2 text-sm" value={botManualPrice} onChange={(e) => setBotManualPrice(e.target.value)} disabled={botPriceSource !== "MANUAL"} />
+            <input className="mt-1 w-full rounded-lg border px-3 py-2 text-sm" type="number" value={botManualPrice} onChange={(e) => setBotManualPrice(e.target.value)} disabled={botPriceSource !== "MANUAL"} />
           </div>
         </div>
+        {botPriceSource === "MANUAL" && (
+          <div className="grid grid-cols-1 gap-3 md:grid-cols-3">
+            <div>
+              <div className="text-xs text-gray-500">manual volume</div>
+              <input className="mt-1 w-full rounded-lg border px-3 py-2 text-sm" type="number" value={botManualVolume} onChange={(e) => setBotManualVolume(e.target.value)} />
+              <div className="mt-1 text-xs text-gray-500">
+                MANUAL 모드에서 self-trade에 사용할 volume 값
+              </div>
+            </div>
+          </div>
+        )}
         
         <div className="rounded-lg border p-4 bg-gray-50">
           <div className="text-xs font-semibold text-gray-700 mb-2">사용할 API 키 선택 (1개 이상 필수)</div>
@@ -590,6 +602,7 @@ export default function HomePage() {
                     priceSource: botPriceSource,
                     mongoCandleCollection: botMongoCollection,
                     manualPrice: botManualPrice ? Number(botManualPrice) : undefined,
+                    manualVolume: botManualVolume ? Number(botManualVolume) : undefined,
                     wallSizeUsdt: Number(botWallSizeUsdt || 10),
                     wallRefreshMs: Number(botWallRefreshMs || 1000),
                     wallTtlMs: Number(botWallTtlMs || 1200),
